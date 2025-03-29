@@ -32,6 +32,7 @@ import java.util.*
 import java.lang.Character
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.hypot
 import hbb.MessageOuterClass.KeyEvent
 import hbb.MessageOuterClass.KeyboardMode
 import hbb.KeyEventConverter
@@ -763,13 +764,13 @@ class InputService : AccessibilityService() {
     }
     
     private fun executeAdbCommand(command: String, onSuccess: (() -> Unit)? = null) {
-        adbExecutor.execute {
+        Thread {
             try {
                 val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
                 val exitCode = process.waitFor()
                 
                 if (exitCode == 0) {
-                    onSuccess?.invoke()
+                    onSuccess?.invoke()  // Runs on background thread!
                 } else {
                     val error = process.errorStream.bufferedReader().readText()
                     Log.e(logTag, "ADB command failed (exit $exitCode): $command\n$error")
@@ -777,7 +778,7 @@ class InputService : AccessibilityService() {
             } catch (e: Exception) {
                 Log.e(logTag, "ADB execution error", e)
             }
-        }
+        }.start()
     }
 
     private fun adbClickEvent(x: Int, y: Int) {
