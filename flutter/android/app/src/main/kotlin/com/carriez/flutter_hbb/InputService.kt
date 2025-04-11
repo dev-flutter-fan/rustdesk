@@ -59,7 +59,7 @@ const val TOUCH_PAN_START = 4
 const val TOUCH_PAN_UPDATE = 5
 const val TOUCH_PAN_END = 6
 
-const val WHEEL_STEP = 120
+const val WHEEL_STEP = 60
 const val WHEEL_DURATION = 100L
 const val LONG_TAP_DELAY = 200L
 
@@ -100,20 +100,9 @@ class InputService : AccessibilityService() {
     fun onMouseInput(mask: Int, _x: Int, _y: Int) {
         val x = max(0, _x)
         val y = max(0, _y)
+        
 
         Log.d("MouseInput", "Input received - Mask: $mask, Raw: ($_x,$_y), Clamped: ($x,$y)")
-
-        // Update mouse position (for all events except pure button presses)
-        if (mask != LEFT_DOWN && mask != RIGHT_UP && mask != BACK_UP && mask != WHEEL_TYPE) {
-            val oldX = mouseX
-            val oldY = mouseY
-            mouseX = x * SCREEN_INFO.scale
-            mouseY = y * SCREEN_INFO.scale
-            
-            if (oldX != mouseX || oldY != mouseY) {
-                Log.d("MouseInput", "Pointer moved: (${oldX},${oldY}) → (${mouseX},${mouseY})")
-            }
-        }
 
         when (mask) {
             LEFT_DOWN -> {
@@ -121,42 +110,37 @@ class InputService : AccessibilityService() {
                 adbClickEvent(mouseX, mouseY)
             }
             
-            RIGHT_UP -> {
-                Log.d("MouseInput", "Right click → Back action")
-                performGlobalAction(GLOBAL_ACTION_BACK)
-            }
-            
-            BACK_UP -> {
-                Log.d("MouseInput", "Back button → Back action")
+            RIGHT_UP, BACK_UP -> {
+                Log.d("MouseInput", "Right/Back action triggered")
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
             
             WHEEL_TYPE -> {
                 val direction = if (_y > 0) 1 else -1
                 val scrollAmount = (WHEEL_STEP * SCREEN_INFO.scale).toInt() * direction
-                val newY = mouseY - scrollAmount  // Note: subtract because screen content moves opposite to finger
+                val newY = mouseY + scrollAmount
                 
-                // Add bounds checking for both top and bottom
-                if (newY >= 0 && newY <= SCREEN_INFO.height * SCREEN_INFO.scale) {
+                if (newY in 0..(SCREEN_INFO.height * SCREEN_INFO.scale)) {
                     Log.d("MouseInput", "Wheel scroll: ${if (_y > 0) "up" else "down"} by ${abs(scrollAmount)}px")
-                    adbSwipeEvent(
-                        mouseX, mouseY,
-                        mouseX, mouseY + scrollAmount,
-                        WHEEL_DURATION
-                    )
-                    // Update the mouse position after successful scroll
-                    mouseY = newY
+                    if (adbSwipeEvent(mouseX, mouseY, mouseX, newY, WHEEL_DURATION)) {
+                        mouseX = x * SCREEN_INFO.scale
+                        mouseY = y * SCREEN_INFO.scale
+                    } else {
+                        Log.e("MouseInput", "Swipe event failed")
+                    }
                 } else {
-                    Log.d("MouseInput", "Wheel scroll ignored - would go beyond screen bounds")
+                    Log.d("MouseInput", "Wheel scroll ignored - bounds exceeded")
                 }
             }
             
-            else -> {
-                // Handle other cases or movement
-                if (mask == 0 || mask == LEFT_MOVE) {
-                    // Movement already handled above
-                } else {
-                    Log.d("MouseInput", "Unhandled input mask: $mask")
+            0, LEFT_MOVE -> {
+                // Track previous position before any updates
+                val oldX = mouseX
+                val oldY = mouseY
+                mouseX = x * SCREEN_INFO.scale
+                mouseY = y * SCREEN_INFO.scale
+                if (oldX != mouseX || oldY != mouseY) {
+                    Log.d("MouseInput", "Pointer moved: ($oldX,$oldY) → ($mouseX,$mouseY)")
                 }
             }
         }
