@@ -134,17 +134,20 @@ class InputService : AccessibilityService() {
             WHEEL_TYPE -> {
                 val direction = if (_y > 0) 1 else -1
                 val scrollAmount = (WHEEL_STEP * SCREEN_INFO.scale).toInt() * direction
-                val newY = mouseY - scrollAmount
+                val newY = mouseY - scrollAmount  // Note: subtract because screen content moves opposite to finger
                 
-                if (newY >= 0) {  // Prevent scrolling above top
+                // Add bounds checking for both top and bottom
+                if (newY >= 0 && newY <= SCREEN_INFO.height * SCREEN_INFO.scale) {
                     Log.d("MouseInput", "Wheel scroll: ${if (_y > 0) "up" else "down"} by ${abs(scrollAmount)}px")
                     adbSwipeEvent(
                         mouseX, mouseY,
-                        mouseX, mouseY + scrollAmount,  // Note: - because y increases downward
+                        mouseX, mouseY + scrollAmount,
                         WHEEL_DURATION
                     )
+                    // Update the mouse position after successful scroll
+                    mouseY = newY
                 } else {
-                    Log.d("MouseInput", "Wheel scroll ignored - would go beyond screen top")
+                    Log.d("MouseInput", "Wheel scroll ignored - would go beyond screen bounds")
                 }
             }
             
