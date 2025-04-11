@@ -122,12 +122,9 @@ class InputService : AccessibilityService() {
                 
                 if (newY in 0..(SCREEN_INFO.height * SCREEN_INFO.scale)) {
                     Log.d("MouseInput", "Wheel scroll: ${if (_y > 0) "up" else "down"} by ${abs(scrollAmount)}px")
-                    if (adbSwipeEvent(mouseX, mouseY, mouseX, newY, WHEEL_DURATION)) {
-                        mouseX = x * SCREEN_INFO.scale
-                        mouseY = y * SCREEN_INFO.scale
-                    } else {
-                        Log.e("MouseInput", "Swipe event failed")
-                    }
+                    adbSwipeEvent(mouseX, mouseY, mouseX, newY, WHEEL_DURATION)
+                    mouseX = x * SCREEN_INFO.scale
+                    mouseY = y * SCREEN_INFO.scale
                 } else {
                     Log.d("MouseInput", "Wheel scroll ignored - bounds exceeded")
                 }
