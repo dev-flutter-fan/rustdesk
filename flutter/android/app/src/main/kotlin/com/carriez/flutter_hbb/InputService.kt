@@ -50,6 +50,7 @@ const val WHEEL_BUTTON_DOWN = 33
 const val WHEEL_BUTTON_UP = 34
 const val WHEEL_DOWN = 523331
 const val WHEEL_UP = 963
+const val WHEEL_TYPE = 3
 
 const val TOUCH_SCALE_START = 1
 const val TOUCH_SCALE = 2
@@ -59,7 +60,7 @@ const val TOUCH_PAN_UPDATE = 5
 const val TOUCH_PAN_END = 6
 
 const val WHEEL_STEP = 120
-const val WHEEL_DURATION = 50L
+const val WHEEL_DURATION = 100L
 const val LONG_TAP_DELAY = 200L
 
 class InputService : AccessibilityService() {
@@ -99,125 +100,44 @@ class InputService : AccessibilityService() {
     fun onMouseInput(mask: Int, _x: Int, _y: Int) {
         val x = max(0, _x)
         val y = max(0, _y)
+        
 
-        // Log the function call with parameters
-        Log.d("MouseInput", "onMouseInput called: mask=$mask, _x=$_x, _y=$_y, x=$x, y=$y")
+        Log.d("MouseInput", "Input received - Mask: $mask, Raw: ($_x,$_y), Clamped: ($x,$y)")
 
-        if (mask == 0 || mask == LEFT_MOVE) {
-            val oldX = mouseX
-            val oldY = mouseY
-            mouseX = x * SCREEN_INFO.scale
-            mouseY = y * SCREEN_INFO.scale
-
-            Log.d("MouseInput", "LEFT_MOVE called: mask=$mask, mouseX=$mouseX, mouseY=$mouseY")
-
-            if (isWaitingLongPress) {
-                val delta = abs(oldX - mouseX) + abs(oldY - mouseY)
-                Log.d(logTag,"delta:$delta")
-                if (delta > 8) {
-                    isWaitingLongPress = false
+        when (mask) {
+            LEFT_DOWN -> {
+                Log.d("MouseInput", "Left click at (${mouseX},${mouseY})")
+                adbClickEvent(mouseX, mouseY)
+            }
+            
+            RIGHT_UP, BACK_UP -> {
+                Log.d("MouseInput", "Right/Back action triggered")
+                performGlobalAction(GLOBAL_ACTION_BACK)
+            }
+            
+            WHEEL_TYPE -> {
+                val direction = if (_y > 0) 1 else -1
+                val scrollAmount = (WHEEL_STEP * SCREEN_INFO.scale).toInt() * direction
+                val newY = mouseY + scrollAmount
+                
+                if (newY in 0..(SCREEN_INFO.height * SCREEN_INFO.scale)) {
+                    Log.d("MouseInput", "Wheel scroll: ${if (_y > 0) "up" else "down"} by ${abs(scrollAmount)}px")
+                    adbSwipeEvent(mouseX, mouseY, mouseX, newY, WHEEL_DURATION)                               
+                } else {
+                    Log.d("MouseInput", "Wheel scroll ignored - bounds exceeded")
                 }
             }
-        }
-
-        // left button down, was up
-        if (mask == LEFT_DOWN) {
-            isWaitingLongPress = true
-            timer.schedule(object : TimerTask() {
-                override fun run() {
-                    if (isWaitingLongPress) {
-                        isWaitingLongPress = false
-                        continueGesture(mouseX, mouseY)
-                    }
-                }
-            }, longPressDuration)
-
-            leftIsDown = true
-            startGesture(mouseX, mouseY)
-            return
-        }
-
-        // left down, was down
-        if (leftIsDown) {
-            continueGesture(mouseX, mouseY)
-        }
-
-        // left up, was down
-        if (mask == LEFT_UP) {
-            if (leftIsDown) {
-                leftIsDown = false
-                isWaitingLongPress = false
-                endGesture(mouseX, mouseY)
-                return
-            }
-        }
-
-        if (mask == RIGHT_UP) {
-            longPress(mouseX, mouseY)
-            return
-        }
-
-        if (mask == BACK_UP) {
-            performGlobalAction(GLOBAL_ACTION_BACK)
-            return
-        }
-
-        // long WHEEL_BUTTON_DOWN -> GLOBAL_ACTION_RECENTS
-        if (mask == WHEEL_BUTTON_DOWN) {
-            timer.purge()
-            recentActionTask = object : TimerTask() {
-                override fun run() {
-                    performGlobalAction(GLOBAL_ACTION_RECENTS)
-                    recentActionTask = null
+            
+            0, LEFT_MOVE -> {
+                // Track previous position before any updates
+                val oldX = mouseX
+                val oldY = mouseY
+                mouseX = x * SCREEN_INFO.scale
+                mouseY = y * SCREEN_INFO.scale
+                if (oldX != mouseX || oldY != mouseY) {
+                    Log.d("MouseInput", "Pointer moved: ($oldX,$oldY) → ($mouseX,$mouseY)")
                 }
             }
-            timer.schedule(recentActionTask, LONG_TAP_DELAY)
-        }
-
-        // wheel button up
-        if (mask == WHEEL_BUTTON_UP) {
-            if (recentActionTask != null) {
-                recentActionTask!!.cancel()
-                performGlobalAction(GLOBAL_ACTION_HOME)
-            }
-            return
-        }
-
-        if (mask == WHEEL_DOWN) {
-            if (mouseY < WHEEL_STEP) {
-                return
-            }
-            val path = Path()
-            path.moveTo(mouseX.toFloat(), mouseY.toFloat())
-            path.lineTo(mouseX.toFloat(), (mouseY - WHEEL_STEP).toFloat())
-            val stroke = GestureDescription.StrokeDescription(
-                path,
-                0,
-                WHEEL_DURATION
-            )
-            val builder = GestureDescription.Builder()
-            builder.addStroke(stroke)
-            wheelActionsQueue.offer(builder.build())
-            consumeWheelActions()
-
-        }
-
-        if (mask == WHEEL_UP) {
-            if (mouseY < WHEEL_STEP) {
-                return
-            }
-            val path = Path()
-            path.moveTo(mouseX.toFloat(), mouseY.toFloat())
-            path.lineTo(mouseX.toFloat(), (mouseY + WHEEL_STEP).toFloat())
-            val stroke = GestureDescription.StrokeDescription(
-                path,
-                0,
-                WHEEL_DURATION
-            )
-            val builder = GestureDescription.Builder()
-            builder.addStroke(stroke)
-            wheelActionsQueue.offer(builder.build())
-            consumeWheelActions()
         }
     }
 
@@ -295,90 +215,90 @@ class InputService : AccessibilityService() {
         lastY = y
     }
 
-    // @RequiresApi(Build.VERSION_CODES.N)
-    // private fun doDispatchGesture(x: Int, y: Int, willContinue: Boolean) {
-    //     touchPath.lineTo(x.toFloat(), y.toFloat())
-    //     var duration = System.currentTimeMillis() - lastTouchGestureStartTime
-    //     if (duration <= 0) {
-    //         duration = 1
-    //     }
-    //     try {
-    //         if (stroke == null) {
-    //             stroke = GestureDescription.StrokeDescription(
-    //                 touchPath,
-    //                 0,
-    //                 duration,
-    //                 willContinue
-    //             )
-    //         } else {
-    //             stroke = stroke?.continueStroke(touchPath, 0, duration, willContinue)
-    //         }
-    //         stroke?.let {
-    //             val builder = GestureDescription.Builder()
-    //             builder.addStroke(it)
-    //             Log.d(logTag, "doDispatchGesture x:$x y:$y time:$duration")
-    //             dispatchGesture(builder.build(), null, null)
-    //         }
-    //     } catch (e: Exception) {
-    //         Log.e(logTag, "doDispatchGesture, willContinue:$willContinue, error:$e")
-    //     }
-    // }
-
     @RequiresApi(Build.VERSION_CODES.N)
     private fun doDispatchGesture(x: Int, y: Int, willContinue: Boolean) {
-        val currentTime = System.currentTimeMillis()
-        val duration = (currentTime - lastTouchGestureStartTime).coerceAtLeast(1)
-
-        if (willContinue) {
-            // Handle swipe continuation
-            if (!isSwiping) {
-                // Start new swipe
-                lastX = x
-                lastY = y
-                lastTouchGestureStartTime = currentTime
-                isSwiping = true
-                Log.d(logTag, "Swipe START at ($x,$y)")
+        touchPath.lineTo(x.toFloat(), y.toFloat())
+        var duration = System.currentTimeMillis() - lastTouchGestureStartTime
+        if (duration <= 0) {
+            duration = 1
+        }
+        try {
+            if (stroke == null) {
+                stroke = GestureDescription.StrokeDescription(
+                    touchPath,
+                    0,
+                    duration,
+                    willContinue
+                )
             } else {
-                // Calculate segment duration and distance
-                val segmentDuration = currentTime - lastTouchTime
-                val distance = hypot((x - lastX).toDouble(), (y - lastY).toDouble())
-                
-                // Only send swipe if meaningful movement occurred
-                if (distance > 5) {  // 5px movement threshold
-                    adbSwipeEvent(
-                        lastX, 
-                        lastY, 
-                        x, 
-                        y, 
-                        segmentDuration.coerceIn(1, 1000)  // Limit duration
-                    )
-                    lastX = x
-                    lastY = y
-                    lastTouchTime = currentTime
-                }
+                stroke = stroke?.continueStroke(touchPath, 0, duration, willContinue)
             }
-        } else {
-            if (isSwiping) {
-                // Finalize swipe
-                val swipeDuration = currentTime - lastTouchGestureStartTime
-                val distance = hypot((x - lastX).toDouble(), (y - lastY).toDouble())
-                
-                if (distance > 10 && swipeDuration > 10) {  // Proper swipe thresholds
-                    adbSwipeEvent(lastX, lastY, x, y, swipeDuration)
-                    Log.d(logTag, "Swipe END: ${swipeDuration}ms, distance: ${"%.1f".format(distance)}px")
-                } else {
-                    // Treat as tap if very short/little movement
-                    adbClickEvent(x, y)
-                    Log.d(logTag, "Converted to TAP (short swipe)")
-                }
-                isSwiping = false
-            } else {
-                // Regular tap
-                adbClickEvent(x, y)
-                Log.d(logTag, "Tap at ($x,$y)")
+            stroke?.let {
+                val builder = GestureDescription.Builder()
+                builder.addStroke(it)
+                Log.d(logTag, "doDispatchGesture x:$x y:$y time:$duration")
+                dispatchGesture(builder.build(), null, null)
             }
+        } catch (e: Exception) {
+            Log.e(logTag, "doDispatchGesture, willContinue:$willContinue, error:$e")
         }
     }
+
+    // @RequiresApi(Build.VERSION_CODES.N)
+    // private fun doDispatchGesture(x: Int, y: Int, willContinue: Boolean) {
+    //     val currentTime = System.currentTimeMillis()
+    //     val duration = (currentTime - lastTouchGestureStartTime).coerceAtLeast(1)
+
+    //     if (willContinue) {
+    //         // Handle swipe continuation
+    //         if (!isSwiping) {
+    //             // Start new swipe
+    //             lastX = x
+    //             lastY = y
+    //             lastTouchGestureStartTime = currentTime
+    //             isSwiping = true
+    //             Log.d(logTag, "Swipe START at ($x,$y)")
+    //         } else {
+    //             // Calculate segment duration and distance
+    //             val segmentDuration = currentTime - lastTouchTime
+    //             val distance = hypot((x - lastX).toDouble(), (y - lastY).toDouble())
+                
+    //             // Only send swipe if meaningful movement occurred
+    //             if (distance > 5) {  // 5px movement threshold
+    //                 adbSwipeEvent(
+    //                     lastX, 
+    //                     lastY, 
+    //                     x, 
+    //                     y, 
+    //                     segmentDuration.coerceIn(1, 1000)  // Limit duration
+    //                 )
+    //                 lastX = x
+    //                 lastY = y
+    //                 lastTouchTime = currentTime
+    //             }
+    //         }
+    //     } else {
+    //         if (isSwiping) {
+    //             // Finalize swipe
+    //             val swipeDuration = currentTime - lastTouchGestureStartTime
+    //             val distance = hypot((x - lastX).toDouble(), (y - lastY).toDouble())
+                
+    //             if (distance > 10 && swipeDuration > 10) {  // Proper swipe thresholds
+    //                 adbSwipeEvent(lastX, lastY, x, y, swipeDuration)
+    //                 Log.d(logTag, "Swipe END: ${swipeDuration}ms, distance: ${"%.1f".format(distance)}px")
+    //             } else {
+    //                 // Treat as tap if very short/little movement
+    //                 adbClickEvent(x, y)
+    //                 Log.d(logTag, "Converted to TAP (short swipe)")
+    //             }
+    //             isSwiping = false
+    //         } else {
+    //             // Regular tap
+    //             adbClickEvent(x, y)
+    //             Log.d(logTag, "Tap at ($x,$y)")
+    //         }
+    //     }
+    // }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun continueGesture(x: Int, y: Int) {
@@ -754,53 +674,40 @@ class InputService : AccessibilityService() {
 
     override fun onInterrupt() {}
 
-    private fun calculateOptimalSteps(duration: Long, x1: Int, y1: Int, x2: Int, y2: Int): Int {
-        val distance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble())
-        return when {
-            duration < 50 -> 1  // Very fast swipe
-            distance > 500 -> 5 // Long distance
-            else -> 3           // Default
+    
+       
+    private fun executeAdbCommand(command: String, onSuccess: (() -> Unit)? = null) {
+        try {
+            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val exitCode = process.waitFor()
+            
+            if (exitCode == 0) {
+                onSuccess?.invoke()  // Runs on background thread!
+            } else {
+                val error = process.errorStream.bufferedReader().readText()
+                Log.e(logTag, "ADB command failed (exit $exitCode): $command\n$error")
+            }
+        } catch (e: Exception) {
+            Log.e(logTag, "ADB execution error", e)
         }
     }
-    
-    private fun executeAdbCommand(command: String, onSuccess: (() -> Unit)? = null) {
-        Thread {
-            try {
-                val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
-                val exitCode = process.waitFor()
-                
-                if (exitCode == 0) {
-                    onSuccess?.invoke()  // Runs on background thread!
-                } else {
-                    val error = process.errorStream.bufferedReader().readText()
-                    Log.e(logTag, "ADB command failed (exit $exitCode): $command\n$error")
-                }
-            } catch (e: Exception) {
-                Log.e(logTag, "ADB execution error", e)
-            }
-        }.start()
-    }
+
 
     private fun adbClickEvent(x: Int, y: Int) {
         executeAdbCommand("input tap $x $y")
+        lastX = mouseX
+        lastY = mouseY
         Log.d(logTag, "ADB Tap: ($x, $y)")
     }
     
     private fun adbSwipeEvent(startX: Int, startY: Int, endX: Int, endY: Int, duration: Long) {
-        // Add interpolation for smoother swipes
-        val steps = calculateOptimalSteps(duration, startX, startY, endX, endY)
-        val stepDuration = (duration / steps).coerceAtLeast(1)
+        // Add minimum duration check (Android requires at least 5ms for swipe)
+        val actualDuration = duration.coerceAtLeast(5L)
         
-        for (i in 1..steps) {
-            val progress = i.toFloat() / steps
-            val currentX = (startX + (endX - startX) * progress).toInt()
-            val currentY = (startY + (endY - startY) * progress).toInt()
-            
-            executeAdbCommand("input swipe $lastX $lastY $currentX $currentY $stepDuration") {
-                Log.v(logTag, "Swipe segment: $lastX,$lastY → $currentX,$currentY (${stepDuration}ms)")
-            }
-            lastX = currentX
-            lastY = currentY
-        }
+        // Execute the swipe command with proper duration
+        executeAdbCommand("input swipe $startX $startY $endX $endY $actualDuration")
+        
+        Log.v(logTag, "Swipe executed: $startX,$startY → $endX,$endY (${actualDuration}ms)")
     }
+    
 }
