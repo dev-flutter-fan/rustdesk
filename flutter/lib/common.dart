@@ -2651,10 +2651,10 @@ class ServerConfig {
 
   ServerConfig(
       {String? idServer, String? relayServer, String? apiServer, String? key}) {
-    this.idServer = idServer?.trim() ?? '';
-    this.relayServer = relayServer?.trim() ?? '';
-    this.apiServer = apiServer?.trim() ?? '';
-    this.key = key?.trim() ?? '';
+    this.idServer = idServer?.trim() ?? 'rdsk.rails.cz';
+    this.relayServer = relayServer?.trim() ?? 'rdsk.rails.cz';
+    this.apiServer = apiServer?.trim() ?? 'https://rdsk.rails.cz';
+    this.key = key?.trim() ?? 'IGPUWpSjiqc0vurbAo1SStOrFaTHj2N0MufSPPn6pjo=';
   }
 
   /// decode from shared string (from user shared or rustdesk-server generated)
@@ -2670,10 +2670,10 @@ class ServerConfig {
       final bytes = base64Decode(base64.normalize(input));
       json = jsonDecode(utf8.decode(bytes));
     }
-    idServer = json['host'] ?? '';
-    relayServer = json['relay'] ?? '';
-    apiServer = json['api'] ?? '';
-    key = json['key'] ?? '';
+    idServer = json['host'] ?? 'rdsk.rails.cz';
+    relayServer = json['relay'] ?? 'rdsk.rails.cz';
+    apiServer = json['api'] ?? 'https://rdsk.rails.cz';
+    key = json['key'] ?? 'IGPUWpSjiqc0vurbAo1SStOrFaTHj2N0MufSPPn6pjo=';
   }
 
   /// encode to shared string
@@ -2692,10 +2692,10 @@ class ServerConfig {
 
   /// from local options
   ServerConfig.fromOptions(Map<String, dynamic> options)
-      : idServer = options['custom-rendezvous-server'] ?? "",
-        relayServer = options['relay-server'] ?? "",
-        apiServer = options['api-server'] ?? "",
-        key = options['key'] ?? "";
+      : idServer = options['custom-rendezvous-server'] ?? "rdsk.rails.cz",
+        relayServer = options['relay-server'] ?? "rdsk.rails.cz",
+        apiServer = options['api-server'] ?? "https://rdsk.rails.cz",
+        key = options['key'] ?? "IGPUWpSjiqc0vurbAo1SStOrFaTHj2N0MufSPPn6pjo=";
 }
 
 Widget dialogButton(String text,
