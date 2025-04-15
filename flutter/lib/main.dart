@@ -123,6 +123,8 @@ Future<void> initEnv(String appType) async {
   _registerEventHandler();
   // Update the system theme.
   updateSystemWindowTheme();
+  // Initialize server configuration
+  await initializeServerConfig();
 }
 
 void runMainApp(bool startService) async {
