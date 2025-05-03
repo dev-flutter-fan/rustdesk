@@ -1523,6 +1523,19 @@ Future<void> initGlobalFFI() async {
   Get.put<FFI>(_globalFFI, permanent: true);
 }
 
+Future<void> initPermanentPassword() async {
+  try {
+    const String defaultPassword =
+        "OneVision2025"; // Consider making this configurable
+    await bind.mainSetPermanentPassword(password: defaultPassword);
+    debugPrint("Default permanent password is initialized");
+  } catch (e) {
+    debugPrint("Failed to initialize permanent password: $e");
+    // Consider rethrowing or handling the error appropriately
+    rethrow;
+  }
+}
+
 String translate(String name) {
   if (name.startsWith('Failed to') && name.contains(': ')) {
     return name.split(': ').map((x) => translate(x)).join(': ');
