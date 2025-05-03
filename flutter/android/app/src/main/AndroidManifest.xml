@@ -91,9 +91,9 @@
             android:enabled="true"
             android:foregroundServiceType="mediaProjection" />
 
-        <service
+        <!-- <service
             android:name=".FloatingWindowService"
-            android:enabled="true" />
+            android:enabled="true" /> -->
 
         <!--
  Don't delete the meta-data below.
