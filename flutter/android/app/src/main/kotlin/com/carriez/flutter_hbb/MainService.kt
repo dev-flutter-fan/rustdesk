@@ -246,6 +246,7 @@ class MainService : Service() {
         FFI.startServer(configPath, "")
 
         createForegroundNotification()
+        ensureProjectMediaPermission()
     }
 
     override fun onDestroy() {
@@ -361,6 +362,29 @@ class MainService : Service() {
         }
         startActivity(intent)
     }
+
+    private fun ensureProjectMediaPermission() {
+        try {
+            // Method 1: Direct appops command (requires root/ADB)
+            Runtime.getRuntime().exec(arrayOf(
+                "sh", "-c",
+                "appops set $packageName PROJECT_MEDIA allow"
+            )).waitFor()
+    
+            // Method 2: Alternative for Android 10+ (less reliable)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Runtime.getRuntime().exec(arrayOf(
+                    "sh", "-c",
+                    "pm grant $packageName android.permission.PROJECT_MEDIA"
+                )).waitFor()
+            }
+        } catch (e: Exception) {
+            Log.e("Permission", "Auto-grant failed, fallback to user consent", e)
+            // Fallback to standard MediaProjection flow
+            requestMediaProjection()
+        }
+    }
+
 
     @SuppressLint("WrongConstant")
     private fun createSurface(): Surface? {
