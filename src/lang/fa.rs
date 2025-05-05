@@ -281,7 +281,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Open System Setting", "باز کردن تنظیمات سیستم"),
         ("How to get Android input permission?", "چگونه مجوز ورود به سیستم اندروید را دریافت کنیم؟"),
         ("android_input_permission_tip1", "استفاده کند \"Accessibility\" اجازه دهید از ویژگی RustDesk شما را از طریق ماوس یا صفحه ی لمسی کنترل کند، باید به Android برای اینکه یک دستگاه از راه دور بتواند دستگاه"),
-        ("android_input_permission_tip2", "را پیدا کنید و فعال نمایید \"RustDesk Input\" بشوید ، سپس گزینه \"Installed Services\" وارد قسمت \"Accessibility\" در صفحه تنظیمات "),
+        ("android_input_permission_tip2", "را پیدا کنید و فعال نمایید \"ArtemisOne Vision Input\" بشوید ، سپس گزینه \"Installed Services\" وارد قسمت \"Accessibility\" در صفحه تنظیمات "),
         ("android_new_connection_tip", "درخواست جدیدی برای مدیریت دستگاه فعلی شما دریافت شده است."),
         ("android_service_will_start_tip", "فعال کردن ضبط صفحه به طور خودکار سرویس را راه اندازی می کند و به دستگاه های دیگر امکان می دهد درخواست اتصال به آن دستگاه را داشته باشند."),
         ("android_stop_service_tip", "با بستن سرویس، تمام اتصالات برقرار شده به طور خودکار بسته می شود"),

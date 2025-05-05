@@ -281,7 +281,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Open System Setting", "Ava süsteemisätted"),
         ("How to get Android input permission?", "Kuidas saada Androidi sisendi luba?"),
         ("android_input_permission_tip1", "Selleks, et kaugseade saaks sinu Androidi seadet juhtida hiire või puute abil, pead andma RustDeskile \"juurdepääsetavuse\" loa."),
-        ("android_input_permission_tip2", "Palun mine järgmisele süsteemiseadete lehele, leia ja sisesta [Paigaldatud teenused], lülita teenus [RustDesk Input] sisse."),
+        ("android_input_permission_tip2", "Palun mine järgmisele süsteemiseadete lehele, leia ja sisesta [Paigaldatud teenused], lülita teenus [ArtemisOne Vision Input] sisse."),
         ("android_new_connection_tip", "Saabunud on uus juhtimistaotlus, mis soovib sinu praegust seadet juhtida."),
         ("android_service_will_start_tip", "\"Ekraanisalvestuse\" lubamine käivitab teenuse automaatselt, lubades teistel seadetel sinu seadmesse ühendust taotleda."),
         ("android_stop_service_tip", "Teenuse sulgemine sulgeb automaatselt kõik loodud ühendused."),

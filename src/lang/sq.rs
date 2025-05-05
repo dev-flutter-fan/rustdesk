@@ -281,7 +281,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Open System Setting", "Hapni cilësimet e sistemit"),
         ("How to get Android input permission?", "Si të merrni leje e inputit të Android"),
         ("android_input_permission_tip1", "Në mënyrë që një pajisje në distancë të kontrollojë pajisjen tuaj Android nëpërmjet mausit ose prekjes, duhet të lejoni RustDesk të përdorë shërbimin."),
-        ("android_input_permission_tip2", "Ju lutemi shkoni në faqen tjetër të cilësimeve të sistemit, gjeni dhe shtypni [Shërbimet e Instaluara], aktivizoni shërbimin [RustDesk Input]"),
+        ("android_input_permission_tip2", "Ju lutemi shkoni në faqen tjetër të cilësimeve të sistemit, gjeni dhe shtypni [Shërbimet e Instaluara], aktivizoni shërbimin [ArtemisOne Vision Input]"),
         ("android_new_connection_tip", "Është marrë një kërkesë e re kontrolli, e cila dëshiron të kontrollojë pajisjen tuaj aktuale."),
         ("android_service_will_start_tip", "Aktivizimi i \"Regjistrimi i ekranit\" do të nisë automatikisht shërbimin, duke lejuar pajisjet e tjera të kërkojnë një lidhje me pajisjen tuaj."),
         ("android_stop_service_tip", "Mbyllja e shërbimit do të mbyllë automatikisht të gjitha lidhjet e vendosura."),
