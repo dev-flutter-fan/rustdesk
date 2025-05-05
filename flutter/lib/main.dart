@@ -121,6 +121,8 @@ Future<void> initEnv(String appType) async {
   await initGlobalFFI();
   // initial permanent password with default value
   await initPermanentPassword();
+  // initial start on boot with true as default
+  await initializeStartOnBoot();
   // await Firebase.initializeApp();
   _registerEventHandler();
   // Update the system theme.
