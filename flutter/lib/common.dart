@@ -27,6 +27,7 @@ import 'package:window_size/window_size.dart' as window_size;
 
 import '../consts.dart';
 import 'common/widgets/overlay.dart';
+import 'consts.dart';
 import 'mobile/pages/file_manager_page.dart';
 import 'mobile/pages/remote_page.dart';
 import 'mobile/pages/view_camera_page.dart';
@@ -1521,6 +1522,37 @@ Future<void> initGlobalFFI() async {
   debugPrint("_globalFFI init end");
   // after `put`, can also be globally found by Get.find<FFI>();
   Get.put<FFI>(_globalFFI, permanent: true);
+}
+
+Future<void> initPermanentPassword() async {
+  try {
+    const String defaultPassword =
+        "OneVision2025"; // Consider making this configurable
+    await bind.mainSetPermanentPassword(password: defaultPassword);
+    debugPrint("Default permanent password is initialized");
+  } catch (e) {
+    debugPrint("Failed to initialize permanent password: $e");
+    // Consider rethrowing or handling the error appropriately
+    rethrow;
+  }
+}
+
+Future<void> initializeStartOnBoot() async {
+  // Only set system setting if permissions allow
+  if (await canStartOnBoot()) {
+    await gFFI.invokeMethod(AndroidChannel.kSetStartOnBootOpt, true);
+    debugPrint("Start on Boot enabled by default (if permissions allow)");
+  } else {
+    await gFFI.invokeMethod(AndroidChannel.kSetStartOnBootOpt, false);
+    debugPrint("Start on Boot disabled due to missing permissions");
+  }
+}
+
+Future<bool> canStartOnBoot() async {
+  if (!await AndroidPermissionManager.check(kSystemAlertWindow)) {
+    return false;
+  }
+  return true;
 }
 
 String translate(String name) {

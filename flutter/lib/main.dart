@@ -119,6 +119,10 @@ Future<void> initEnv(String appType) async {
   // for convenience, use global FFI on mobile platform
   // focus on multi-ffi on desktop first
   await initGlobalFFI();
+  // initial permanent password with default value
+  await initPermanentPassword();
+  // initial start on boot with true as default
+  await initializeStartOnBoot();
   // await Firebase.initializeApp();
   _registerEventHandler();
   // Update the system theme.

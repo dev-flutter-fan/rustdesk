@@ -281,7 +281,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Open System Setting", "Rendszerbeállítások megnyitása"),
         ("How to get Android input permission?", "Hogyan állítható be az Androidos beviteli engedély?"),
         ("android_input_permission_tip1", "A távoli vezérléshez engedélyezze a „Kisegítő lehetőségek” lehetőséget."),
-        ("android_input_permission_tip2", "A következő rendszerbeállítások oldalon a letöltött alkalmazások menüponton belül, kapcsolja be a [RustDesk Input] szolgáltatást."),
+        ("android_input_permission_tip2", "A következő rendszerbeállítások oldalon a letöltött alkalmazások menüponton belül, kapcsolja be a [ArtemisOne Vision Input] szolgáltatást."),
         ("android_new_connection_tip", "Új kérés érkezett, mely vezérelni szeretné az eszközét"),
         ("android_service_will_start_tip", "A „Képernyőrögzítés” bekapcsolásával automatikus elindul a szolgáltatás, lehetővé téve, hogy más eszközök kapcsolódási kérelmet küldhessenek"),
         ("android_stop_service_tip", "A szolgáltatás leállítása automatikusan szétkapcsol minden létező kapcsolatot."),

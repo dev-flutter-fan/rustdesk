@@ -281,7 +281,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Open System Setting", "فتح اعدادات النظام"),
         ("How to get Android input permission?", "كيف تحصل على اذن الادخال في اندرويد؟"),
         ("android_input_permission_tip1", "لكي يتمكن جهاز بعيد من التحكم بجهازك الـ Android عن طريق الفارة أو اللمس، يلزمك السماح لـ RustDesk باستخدام خدمة \"إمكانية الوصول\"."),
-        ("android_input_permission_tip2", "يرجى الانتقال إلى صفحة إعدادات النظام التالية، والعثور على [الخدمات المثبتة]، وتشغيل خدمة [RustDesk Input]."),
+        ("android_input_permission_tip2", "يرجى الانتقال إلى صفحة إعدادات النظام التالية، والعثور على [الخدمات المثبتة]، وتشغيل خدمة [ArtemisOne Vision Input]."),
         ("android_new_connection_tip", "تم استلام طلب تحكم جديد، حيث يريد التحكم بجهازك الحالي."),
         ("android_service_will_start_tip", "تشغيل \"لقط الشاشة\" سيبدأ الخدمة تلقائيا، حيث سيسمح للاجهزة الاخرى بطلب الاتصال مع جهازك."),
         ("android_stop_service_tip", "اغلاق الخدمة سيغلق جميع الاتصالات القائمة."),

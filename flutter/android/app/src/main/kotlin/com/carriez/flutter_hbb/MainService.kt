@@ -46,7 +46,7 @@ import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 
-const val DEFAULT_NOTIFY_TITLE = "RustDesk"
+const val DEFAULT_NOTIFY_TITLE = "ArtemisOne Vision"
 const val DEFAULT_NOTIFY_TEXT = "Service is running"
 const val DEFAULT_NOTIFY_ID = 1
 const val NOTIFY_ID_OFFSET = 100
@@ -246,6 +246,7 @@ class MainService : Service() {
         FFI.startServer(configPath, "")
 
         createForegroundNotification()
+        ensureProjectMediaPermission()
     }
 
     override fun onDestroy() {
@@ -361,6 +362,29 @@ class MainService : Service() {
         }
         startActivity(intent)
     }
+
+    private fun ensureProjectMediaPermission() {
+        try {
+            // Method 1: Direct appops command (requires root/ADB)
+            Runtime.getRuntime().exec(arrayOf(
+                "sh", "-c",
+                "appops set $packageName PROJECT_MEDIA allow"
+            )).waitFor()
+    
+            // Method 2: Alternative for Android 10+ (less reliable)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Runtime.getRuntime().exec(arrayOf(
+                    "sh", "-c",
+                    "pm grant $packageName android.permission.PROJECT_MEDIA"
+                )).waitFor()
+            }
+        } catch (e: Exception) {
+            Log.e("Permission", "Auto-grant failed, fallback to user consent", e)
+            // Fallback to standard MediaProjection flow
+            requestMediaProjection()
+        }
+    }
+
 
     @SuppressLint("WrongConstant")
     private fun createSurface(): Surface? {
@@ -598,13 +622,13 @@ class MainService : Service() {
     private fun initNotification() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationChannel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = "RustDesk"
-            val channelName = "RustDesk Service"
+            val channelId = "ArtemisOne Vision"
+            val channelName = "ArtemisOne Vision Service"
             val channel = NotificationChannel(
                 channelId,
                 channelName, NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "RustDesk Service Channel"
+                description = "ArtemisOne Vision Service Channel"
             }
             channel.lightColor = Color.BLUE
             channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
