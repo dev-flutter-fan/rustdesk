@@ -32,6 +32,14 @@ class BootReceiver : BroadcastReceiver() {
                 return
             }
 
+             // Re-apply PROJECT_MEDIA permission
+             try {
+                Log.d(logTag, "Reapplying PROJECT_MEDIA permission")
+                Runtime.getRuntime().exec(arrayOf("sh", "-c", "appops set ${context.packageName} PROJECT_MEDIA allow")).waitFor()
+            } catch (e: Exception) {
+                Log.e(logTag, "Failed to reapply PROJECT_MEDIA permission", e)
+            }
+
             val it = Intent(context, MainService::class.java).apply {
                 action = ACT_INIT_MEDIA_PROJECTION_AND_SERVICE
                 putExtra(EXT_INIT_FROM_BOOT, true)
