@@ -561,21 +561,22 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
           gFFI.invokeMethod(AndroidChannel.kSetStartOnBootOpt, toValue);
         }));
 
-    if (!bind.isCustomClient()) {
-      enhancementsTiles.add(
-        SettingsTile.switchTile(
-          initialValue: _checkUpdateOnStartup,
-          title:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(translate('Check for software update on startup')),
-          ]),
-          onToggle: (bool toValue) async {
-            await mainSetLocalBoolOption(kOptionEnableCheckUpdate, toValue);
-            setState(() => _checkUpdateOnStartup = toValue);
-          },
-        ),
-      );
-    }
+    // Hide Check for software update on startup in settings.
+    // if (!bind.isCustomClient()) {
+    //   enhancementsTiles.add(
+    //     SettingsTile.switchTile(
+    //       initialValue: _checkUpdateOnStartup,
+    //       title:
+    //           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    //         Text(translate('Check for software update on startup')),
+    //       ]),
+    //       onToggle: (bool toValue) async {
+    //         await mainSetLocalBoolOption(kOptionEnableCheckUpdate, toValue);
+    //         setState(() => _checkUpdateOnStartup = toValue);
+    //       },
+    //     ),
+    //   );
+    // }
 
     onFloatingWindowChanged(bool toValue) async {
       if (toValue) {
