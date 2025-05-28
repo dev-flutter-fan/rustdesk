@@ -48,6 +48,7 @@ const val WHEEL_BUTTON_DOWN = 33
 const val WHEEL_BUTTON_UP = 34
 const val WHEEL_DOWN = 523331
 const val WHEEL_UP = 963
+const val WHEEL_TYPE = 3
 
 const val TOUCH_SCALE_START = 1
 const val TOUCH_SCALE = 2
@@ -143,7 +144,9 @@ class InputService : AccessibilityService() {
         }
 
         if (mask == RIGHT_UP) {
-            longPress(mouseX, mouseY)
+            // RIGHT_UP -> GLOBAL_ACTION_BACK
+            // longPress(mouseX, mouseY)
+            performGlobalAction(GLOBAL_ACTION_BACK)
             return
         }
 
@@ -153,52 +156,78 @@ class InputService : AccessibilityService() {
         }
 
         // long WHEEL_BUTTON_DOWN -> GLOBAL_ACTION_RECENTS
-        if (mask == WHEEL_BUTTON_DOWN) {
-            timer.purge()
-            recentActionTask = object : TimerTask() {
-                override fun run() {
-                    performGlobalAction(GLOBAL_ACTION_RECENTS)
-                    recentActionTask = null
-                }
-            }
-            timer.schedule(recentActionTask, LONG_TAP_DELAY)
-        }
+        // if (mask == WHEEL_BUTTON_DOWN) {
+        //     timer.purge()
+        //     recentActionTask = object : TimerTask() {
+        //         override fun run() {
+        //             performGlobalAction(GLOBAL_ACTION_RECENTS)
+        //             recentActionTask = null
+        //         }
+        //     }
+        //     timer.schedule(recentActionTask, LONG_TAP_DELAY)
+        // }
 
         // wheel button up
-        if (mask == WHEEL_BUTTON_UP) {
-            if (recentActionTask != null) {
-                recentActionTask!!.cancel()
-                performGlobalAction(GLOBAL_ACTION_HOME)
-            }
+        // if (mask == WHEEL_BUTTON_UP) {
+        //     if (recentActionTask != null) {
+        //         recentActionTask!!.cancel()
+        //         performGlobalAction(GLOBAL_ACTION_HOME)
+        //     }
+        //     return
+        // }
+
+        // WHEEL_BUTTON_DOWN -> GLOBAL_ACTION_HOME
+        if(mask == WHEEL_BUTTON_UP){
+            performGlobalAction(GLOBAL_ACTION_HOME)
             return
         }
 
-        if (mask == WHEEL_DOWN) {
-            if (mouseY < WHEEL_STEP) {
+        // if (mask == WHEEL_DOWN) {
+        //     if (mouseY < WHEEL_STEP) {
+        //         return
+        //     }
+        //     val path = Path()
+        //     path.moveTo(mouseX.toFloat(), mouseY.toFloat())
+        //     path.lineTo(mouseX.toFloat(), (mouseY - WHEEL_STEP).toFloat())
+        //     val stroke = GestureDescription.StrokeDescription(
+        //         path,
+        //         0,
+        //         WHEEL_DURATION
+        //     )
+        //     val builder = GestureDescription.Builder()
+        //     builder.addStroke(stroke)
+        //     wheelActionsQueue.offer(builder.build())
+        //     consumeWheelActions()
+
+        // }
+
+        // if (mask == WHEEL_UP) {
+        //     if (mouseY < WHEEL_STEP) {
+        //         return
+        //     }
+        //     val path = Path()
+        //     path.moveTo(mouseX.toFloat(), mouseY.toFloat())
+        //     path.lineTo(mouseX.toFloat(), (mouseY + WHEEL_STEP).toFloat())
+        //     val stroke = GestureDescription.StrokeDescription(
+        //         path,
+        //         0,
+        //         WHEEL_DURATION
+        //     )
+        //     val builder = GestureDescription.Builder()
+        //     builder.addStroke(stroke)
+        //     wheelActionsQueue.offer(builder.build())
+        //     consumeWheelActions()
+        // }
+
+        // WHEEL_TYPE -> WHEEL_UP | WHEEL_DOWN
+        if(mask == WHEEL_TYPE){
+            if(mouseY < WHEEL_STEP){
                 return
             }
+            val direction = if (_y > 0) 1 else -1
             val path = Path()
             path.moveTo(mouseX.toFloat(), mouseY.toFloat())
-            path.lineTo(mouseX.toFloat(), (mouseY - WHEEL_STEP).toFloat())
-            val stroke = GestureDescription.StrokeDescription(
-                path,
-                0,
-                WHEEL_DURATION
-            )
-            val builder = GestureDescription.Builder()
-            builder.addStroke(stroke)
-            wheelActionsQueue.offer(builder.build())
-            consumeWheelActions()
-
-        }
-
-        if (mask == WHEEL_UP) {
-            if (mouseY < WHEEL_STEP) {
-                return
-            }
-            val path = Path()
-            path.moveTo(mouseX.toFloat(), mouseY.toFloat())
-            path.lineTo(mouseX.toFloat(), (mouseY + WHEEL_STEP).toFloat())
+            path.lineTo(mouseX.toFloat(), (mouseY + WHEEL_STEP * direction).toFloat())
             val stroke = GestureDescription.StrokeDescription(
                 path,
                 0,
