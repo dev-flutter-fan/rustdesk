@@ -3851,9 +3851,9 @@ String get appName {
 /// Initialize server configuration with custom values
 Future<void> initializeServerConfig() async {
   final serverConfig = ServerConfig(
-      idServer: 'rdsk.rails.cz',
-      relayServer: 'rdsk.rails.cz',
-      apiServer: 'https://rdsk.rails.cz',
+      idServer: 'vision.artemisone.eu',
+      relayServer: 'vision.artemisone.eu',
+      apiServer: 'https://vision.artemisone.eu',
       key: 'IGPUWpSjiqc0vurbAo1SStOrFaTHj2N0MufSPPn6pjo=');
 
   // Set the server options
