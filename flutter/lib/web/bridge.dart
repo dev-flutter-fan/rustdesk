@@ -1854,14 +1854,14 @@ class RustdeskImpl {
 
   // Printer methods
 
-  Future<String> mainGetPrinterNames({dynamic hint}) async {
+  mainGetPrinterNames({dynamic hint}) {
     try {
       // For web implementation
       final printers = []; // Empty list for web fallback
       return jsonEncode(printers); // Return as JSON string
     } catch (e) {
       debugPrint('Error getting printer names: $e');
-      return '[]'; // Return empty JSON array string
+      return ''; // Return empty JSON array string
     }
   }
 
