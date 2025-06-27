@@ -1853,28 +1853,31 @@ class RustdeskImpl {
   }
 
   // Printer methods
-  Future<List<String>> mainGetPrinterNames({dynamic hint}) async {
+
+  Future<String> mainGetPrinterNames({dynamic hint}) async {
     try {
-      // For web implementation, you might need to call a JavaScript interop function
-      // Example: return await js.context.callMethod('getPrinterNames');
-      return []; // Return empty JSON array as fallback
+      // For web implementation
+      final printers = []; // Empty list for web fallback
+      return jsonEncode(printers); // Return as JSON string
     } catch (e) {
       debugPrint('Error getting printer names: $e');
-      return [];
+      return '[]'; // Return empty JSON array string
     }
   }
 
 // Screenshot methods
-  Future<List<String>> sessionHandleScreenshot(
+  Future<String> sessionHandleScreenshot(
       {required UuidValue sessionId,
       required String action,
       dynamic hint}) async {
     // Web implementation might not support screenshots
-    return []; // Return empty string to indicate no screenshot data
+    return ''; // Return empty string to indicate no screenshot data
   }
 
   Future<String> sessionTakeScreenshot(
-      {required UuidValue sessionId, int display, dynamic hint}) async {
+      {required UuidValue sessionId,
+      required int display,
+      dynamic hint}) async {
     // Web fallback - return empty string
     return '';
   }
@@ -1885,7 +1888,6 @@ class RustdeskImpl {
       required int id,
       required String path,
       required String printerName,
-      required bool ok,
       dynamic hint}) {
     // Web doesn't support printer functionality
   }
@@ -1914,7 +1916,7 @@ class RustdeskImpl {
   String sessionGetCommonSync(
       {required UuidValue sessionId,
       required String key,
-      String param,
+      required String param,
       dynamic hint}) {
     // Return appropriate defaults for web
     switch (key) {
