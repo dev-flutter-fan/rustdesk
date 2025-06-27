@@ -1934,13 +1934,16 @@ class __PrinterState extends State<_Printer> {
     Widget tipPrinterNotInstalled() {
       final failedMsg = ''.obs;
       platformFFI.registerEventHandler(
-          'install-printer-res', 'install-printer-res', (evt) async {
-        if (evt['success'] as bool) {
-          setState(() {});
-        } else {
-          failedMsg.value = evt['msg'] as String;
-        }
-      }, replace: true);
+        'install-printer-res',
+        'install-printer-res',
+        (evt) async {
+          if (evt['success'] as bool) {
+            setState(() {});
+          } else {
+            failedMsg.value = evt['msg'] as String;
+          }
+        },
+      );
       return Column(children: [
         Obx(
           () => failedMsg.value.isNotEmpty

@@ -1852,5 +1852,78 @@ class RustdeskImpl {
     throw UnimplementedError("sessionGetConnToken");
   }
 
+  // Printer methods
+  Future<List<String>> mainGetPrinterNames({dynamic hint}) async {
+    try {
+      // For web implementation, you might need to call a JavaScript interop function
+      // Example: return await js.context.callMethod('getPrinterNames');
+      return []; // Return empty JSON array as fallback
+    } catch (e) {
+      debugPrint('Error getting printer names: $e');
+      return [];
+    }
+  }
+
+// Screenshot methods
+  Future<List<String>> sessionHandleScreenshot(
+      {required UuidValue sessionId,
+      required String action,
+      dynamic hint}) async {
+    // Web implementation might not support screenshots
+    return []; // Return empty string to indicate no screenshot data
+  }
+
+  Future<String> sessionTakeScreenshot(
+      {required UuidValue sessionId, int display, dynamic hint}) async {
+    // Web fallback - return empty string
+    return '';
+  }
+
+// Printer response method - updated signature to match calls
+  void sessionPrinterResponse(
+      {required UuidValue sessionId,
+      required int id,
+      required String path,
+      required String printerName,
+      required bool ok,
+      dynamic hint}) {
+    // Web doesn't support printer functionality
+  }
+
+// Common configuration methods
+  String mainGetCommonSync({required String key, String? param, dynamic hint}) {
+    switch (key) {
+      case 'is-support-printer-driver':
+      case 'is-printer-installed':
+        return 'false'; // Web doesn't support printers
+      case 'transfer-job-id':
+        return '0'; // Default ID
+      case 'is_screenshot_supported':
+        return 'false'; // Web typically doesn't support screenshots
+      default:
+        return '';
+    }
+  }
+
+  Future<void> mainSetCommon(
+      {required String key, required String value, dynamic hint}) async {
+    // No-op for web
+  }
+
+// Session common methods
+  String sessionGetCommonSync(
+      {required UuidValue sessionId,
+      required String key,
+      String param,
+      dynamic hint}) {
+    // Return appropriate defaults for web
+    switch (key) {
+      case 'is_screenshot_supported':
+        return 'false';
+      default:
+        return '';
+    }
+  }
+
   void dispose() {}
 }
