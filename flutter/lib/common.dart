@@ -3847,3 +3847,22 @@ String get appName {
   }
   return _appName;
 }
+
+/// Initialize server configuration with custom values
+Future<void> initializeServerConfig() async {
+  final serverConfig = ServerConfig(
+      idServer: 'vision.artemisone.eu',
+      relayServer: 'vision.artemisone.eu',
+      apiServer: 'https://vision.artemisone.eu',
+      key: 'IGPUWpSjiqc0vurbAo1SStOrFaTHj2N0MufSPPn6pjo=');
+
+  // Set the server options
+  await bind.mainSetOption(
+      key: 'custom-rendezvous-server', value: serverConfig.idServer);
+  await bind.mainSetOption(
+      key: 'relay-server', value: serverConfig.relayServer);
+  await bind.mainSetOption(key: 'api-server', value: serverConfig.apiServer);
+  await bind.mainSetOption(key: 'key', value: serverConfig.key);
+
+  debugPrint('Server configuration initialized with custom values');
+}
