@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/consts.dart';
@@ -475,7 +476,27 @@ class ServerModel with ChangeNotifier {
     if (id != _serverId.id) {
       _serverId.id = id;
       notifyListeners();
+      // Save the new ID to /storage/emulated/0/ArtemisOneVision/vision_client_id.txt
+      await writeClientIdToArtemisOneVision(id);
     }
+  }
+
+  Future<void> writeClientIdToArtemisOneVision(String clientId) async {
+    // Check and request storage permission using the app's permission manager
+    if (!await AndroidPermissionManager.check(kManageExternalStorage)) {
+      final granted = await AndroidPermissionManager.request(kManageExternalStorage);
+      if (!granted) {
+        // Permission denied, do not proceed
+        return;
+      }
+    }
+
+    final dir = Directory('/storage/emulated/0/ArtemisOne Vision');
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    final file = File('${dir.path}/vision_client_id.txt');
+    await file.writeAsString(clientId);
   }
 
   changeStatue(String name, bool value) {
