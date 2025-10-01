@@ -47,6 +47,9 @@ class MainActivity : FlutterActivity() {
     private val logTag = "mMainActivity"
     private var mainService: MainService? = null
 
+    // Keep this channel name identical to the Dart side
+    private val CHANNEL = "com.carriez.flutter_hbb/media"
+
     private var isAudioStart = false
     private val audioRecordHandle = AudioRecordHandle(this, { false }, { isAudioStart })
 
@@ -57,6 +60,19 @@ class MainActivity : FlutterActivity() {
                 bindService(it, serviceConnection, Context.BIND_AUTO_CREATE)
             }
         }
+        
+        // MethodChannel that Dart code calls for PROJECT_MEDIA (and related)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getProjectMediaAppOps" -> result.success(MainService.getProjectMediaAppOps(this))
+                "requestProjectMediaPermission" -> {
+                    MainService.requestProjectMediaPermission(this)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        
         flutterMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             channelTag

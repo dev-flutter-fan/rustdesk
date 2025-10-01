@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/widgets/setting_widgets.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_setting_page.dart';
 import 'package:flutter_hbb/models/state_model.dart';
@@ -92,6 +93,9 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
   var _hideProxy = false;
   var _hideNetwork = false;
   var _enableTrustedDevices = false;
+  
+  static const MethodChannel _channel = MethodChannel("com.carriez.flutter_hbb/media");
+  String _projectMediaStatus = "Loading...";
 
   _SettingsState() {
     _enableAbr = option2bool(
@@ -127,7 +131,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
+    _fetchProjectMediaStatus();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var update = false;
 
@@ -224,6 +228,19 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
       return true;
     } else {
       return false;
+    }
+  }
+
+  Future<void> _fetchProjectMediaStatus() async {
+    try {
+      final result = await _channel.invokeMethod<String>('getProjectMediaAppOps');
+      setState(() {
+        _projectMediaStatus = result ?? "No result";
+      });
+    } catch (e) {
+      setState(() {
+        _projectMediaStatus = "Error: $e";
+      });
     }
   }
 
@@ -685,6 +702,27 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
             onPressed: (context) {
               showThemeSettings(gFFI.dialogManager);
             },
+          ),
+          SettingsTile(
+            title: Text("PROJECT_MEDIA AppOps Status"),
+            value: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(_projectMediaStatus),
+            ),
+            leading: Icon(Icons.privacy_tip),
+            trailing: IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () async{
+                try {
+                  await _channel.invokeMethod('requestProjectMediaPermission');
+                  await _fetchProjectMediaStatus();
+                } catch (e) {
+                  setState(() {
+                    _projectMediaStatus = "Error: $e";
+                  });
+                }
+              },
+            ),
           )
         ]),
         if (isAndroid)
