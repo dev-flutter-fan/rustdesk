@@ -204,6 +204,48 @@ class MainService : Service() {
             get() = _isStart
         val isAudioStart: Boolean
             get() = _isAudioStart
+
+        @JvmStatic
+        fun getProjectMediaAppOps(context: Context): String {
+            return try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                    val mode = appOps.checkOpNoThrow(
+                        "PROJECT_MEDIA",
+                        android.os.Process.myUid(),
+                        context.packageName
+                    )
+                    when (mode) {
+                        AppOpsManager.MODE_ALLOWED -> "allow"
+                        AppOpsManager.MODE_IGNORED -> "ignored"
+                        AppOpsManager.MODE_ERRORED -> "errored"
+                        else -> "unknown($mode)"
+                    }
+                } else {
+                    val process = Runtime.getRuntime().exec(
+                        arrayOf("sh", "-c", "appops get ${context.packageName} PROJECT_MEDIA")
+                    )
+                    val output = process.inputStream.bufferedReader().readText().trim()
+                    process.waitFor()
+                    if (output.isEmpty()) "no result" else output
+                }
+            } catch (e: Exception) {
+                "error: ${e.message}"
+            }
+        }
+
+        @JvmStatic
+        fun requestProjectMediaPermission(context: Context) {
+            if (context is MainService) {
+                context.ensureProjectMediaPermission()
+            } else {
+                val intent = Intent(context, MainService::class.java).apply {
+                    action = "REQUEST_PROJECT_MEDIA"
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startService(intent)
+            }
+        }
     }
 
     private val logTag = "LOG_SERVICE"
@@ -246,7 +288,6 @@ class MainService : Service() {
         FFI.startServer(configPath, "")
 
         createForegroundNotification()
-        ensureProjectMediaPermission()
     }
 
     override fun onDestroy() {
@@ -327,6 +368,11 @@ class MainService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("whichService", "this service: ${Thread.currentThread()}")
         super.onStartCommand(intent, flags, startId)
+
+        if (intent?.action == "REQUEST_PROJECT_MEDIA") {
+            ensureProjectMediaPermission()
+        }
+
         if (intent?.action == ACT_INIT_MEDIA_PROJECTION_AND_SERVICE) {
             createForegroundNotification()
 
@@ -364,26 +410,69 @@ class MainService : Service() {
     }
 
     private fun ensureProjectMediaPermission() {
-        try {
-            // Method 1: Direct appops command (requires root/ADB)
-            Runtime.getRuntime().exec(arrayOf(
-                "sh", "-c",
-                "appops set $packageName PROJECT_MEDIA allow"
-            )).waitFor()
-    
-            // Method 2: Alternative for Android 10+ (less reliable)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Runtime.getRuntime().exec(arrayOf(
-                    "sh", "-c",
-                    "pm grant $packageName android.permission.PROJECT_MEDIA"
-                )).waitFor()
+        thread {
+            try {
+                val sdk = Build.VERSION.SDK_INT
+                Log.d(logTag, "Ensuring PROJECT_MEDIA, SDK_INT=$sdk")
+
+                var granted = false
+
+                // Android 13+ (Tiramisu) using AppOpsManager API
+                if (sdk >= Build.VERSION_CODES.TIRAMISU) {
+                    val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                    val mode = appOps.checkOpNoThrow(
+                        "PROJECT_MEDIA",
+                        android.os.Process.myUid(),
+                        packageName
+                    )
+                    granted = mode == AppOpsManager.MODE_ALLOWED
+                    Log.d(logTag, "AppOpsManager check PROJECT_MEDIA mode=$mode")
+                }
+
+                // Older versions or fallback: direct AppOps shell command
+                if (!granted) {
+                    val appOpsProcess = Runtime.getRuntime().exec(
+                        arrayOf("sh", "-c", "appops set $packageName PROJECT_MEDIA allow")
+                    )
+                    val exitCode = appOpsProcess.waitFor()
+                    granted = exitCode == 0
+                    Log.d(logTag, "AppOps shell command exitCode=$exitCode")
+                }
+
+                // pm grant (system apps only, Q+)
+                if (!granted && sdk >= Build.VERSION_CODES.Q) {
+                    try {
+                        val grantProcess = Runtime.getRuntime().exec(
+                            arrayOf("sh", "-c", "pm grant $packageName android.permission.PROJECT_MEDIA")
+                        )
+                        val grantExit = grantProcess.waitFor()
+                        granted = grantExit == 0
+                        Log.d(logTag, "pm grant exitCode=$grantExit")
+                    } catch (e: Exception) {
+                        Log.w(logTag, "pm grant failed: ${e.message}")
+                    }
+                }
+
+                // Fallback: request MediaProjection prompt from user
+                if (!granted) {
+                    Log.w(logTag, "PROJECT_MEDIA not granted, requesting user consent")
+                    Handler(Looper.getMainLooper()).post {
+                        requestMediaProjection()
+                    }
+                } else {
+                    Log.d(logTag, "PROJECT_MEDIA successfully granted")
+                    _isReady = true
+                }
+
+            } catch (e: Exception) {
+                Log.e(logTag, "Error ensuring PROJECT_MEDIA: ${e.message}", e)
+                Handler(Looper.getMainLooper()).post {
+                    requestMediaProjection()
+                }
             }
-        } catch (e: Exception) {
-            Log.e("Permission", "Auto-grant failed, fallback to user consent", e)
-            // Fallback to standard MediaProjection flow
-            requestMediaProjection()
         }
     }
+
 
 
     @SuppressLint("WrongConstant")
