@@ -204,6 +204,52 @@ class MainService : Service() {
             get() = _isStart
         val isAudioStart: Boolean
             get() = _isAudioStart
+
+            @JvmStatic
+            fun getProjectMediaAppOps(context: Context): String {
+                return try {
+                    // Use shell command directly since app has root/system privileges
+                    val process = Runtime.getRuntime().exec(
+                        arrayOf("sh", "-c", "appops get ${context.packageName} PROJECT_MEDIA")
+                    )
+                    val output = process.inputStream.bufferedReader().readText().trim()
+                    process.waitFor()
+
+                    if (output.isEmpty()) {
+                        // If no explicit result, try reading via pm dump for verification
+                        val pmCheck = Runtime.getRuntime().exec(
+                            arrayOf("sh", "-c", "pm dump ${context.packageName} | grep PROJECT_MEDIA")
+                        )
+                        val pmOutput = pmCheck.inputStream.bufferedReader().readText().trim()
+                        pmCheck.waitFor()
+                        if (pmOutput.isEmpty()) "unknown" else pmOutput
+                    } else {
+                        output
+                    }
+                } catch (e: Exception) {
+                    "error: ${e.message}"
+                }
+            }
+
+            @JvmStatic
+            fun requestProjectMediaPermission(context: Context) {
+                try {
+                    // Directly grant permission using root privileges
+                    val appOpsCmd = "appops set ${context.packageName} PROJECT_MEDIA allow"
+                    val pmGrantCmd = "pm grant ${context.packageName} android.permission.PROJECT_MEDIA"
+
+                    val appOpsProcess = Runtime.getRuntime().exec(arrayOf("sh", "-c", appOpsCmd))
+                    val appOpsExit = appOpsProcess.waitFor()
+
+                    val pmProcess = Runtime.getRuntime().exec(arrayOf("sh", "-c", pmGrantCmd))
+                    val pmExit = pmProcess.waitFor()
+
+                    Log.d("Permission", "PROJECT_MEDIA granted (appops=$appOpsExit, pm=$pmExit)")
+                } catch (e: Exception) {
+                    Log.e("Permission", "Failed to auto-grant PROJECT_MEDIA", e)
+                }
+            }
+
     }
 
     private val logTag = "LOG_SERVICE"
